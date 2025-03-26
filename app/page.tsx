@@ -1,11 +1,17 @@
 import { BlogPosts } from 'app/components/posts'
+import NeuralNetwork from 'app/components/NeuralNetwork'
 
 export default function Page() {
   return (
     <section>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tighter">
-        My Portfolio
-      </h1>
+      <div className="relative h-[400px] w-full mb-8">
+        <NeuralNetwork width={800} height={400} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <h1 className="text-4xl font-semibold tracking-tighter text-white drop-shadow-lg">
+            My Portfolio
+          </h1>
+        </div>
+      </div>
       <p className="mb-4">
         {`
         I'm a Computer Science student at the Technical University of Munich,
