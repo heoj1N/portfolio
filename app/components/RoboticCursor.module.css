@@ -14,6 +14,16 @@
   z-index: 9999;
   mix-blend-mode: screen;
   box-shadow: 0 0 10px #00ffff;
+  transition: background 0.3s, border 0.3s, box-shadow 0.3s, width 0.3s, height 0.3s;
+}
+
+.cursor.link {
+  background: rgba(0, 255, 0, 0.5);
+  border: 2px solid #00ff00;
+  box-shadow: 0 0 10px #00ff00;
+  width: 24px;
+  height: 24px;
+  animation: pulseGreen 1.5s infinite;
 }
 
 .trail {
@@ -32,6 +42,12 @@
   pointer-events: none;
   mix-blend-mode: screen;
   box-shadow: 0 0 5px #00ffff;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.trailDot.link {
+  background: #00ff00;
+  box-shadow: 0 0 5px #00ff00;
 }
 
 .grid {
@@ -57,10 +73,30 @@
   z-index: 9998;
   background-color: rgba(0, 255, 255, 0.1);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-  transition: opacity 0.2s ease;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 .gridCell.highlight {
   background-color: rgba(0, 255, 255, 0.1);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.gridCell.link {
+  background-color: rgba(0, 255, 0, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+}
+
+@keyframes pulseGreen {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    transform: translate(-50%, -50%) scale(1);
+  }
 } 

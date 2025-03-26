@@ -1,25 +1,43 @@
 import { baseUrl } from 'app/sitemap'
 import { getBlogPosts } from 'app/blog/utils'
+import { getPapers } from 'app/papers/utils'
 
 export async function GET() {
   let allBlogs = await getBlogPosts()
+  let allPapers = await getPapers()
 
-  const itemsXml = allBlogs
-    .sort((a, b) => {
-      if (new Date(a.metadata.publishedAt) > new Date(b.metadata.publishedAt)) {
-        return -1
-      }
-      return 1
-    })
+  // Combine blogs and papers into a single feed
+  const blogItems = allBlogs.map(post => ({
+    title: post.metadata.title,
+    link: `${baseUrl}/blog/${post.slug}`,
+    description: post.metadata.summary || '',
+    pubDate: new Date(post.metadata.publishedAt).toUTCString(),
+    type: 'blog'
+  }))
+
+  const paperItems = allPapers.map(paper => ({
+    title: paper.metadata.title,
+    link: `${baseUrl}/papers/${paper.slug}`,
+    description: paper.metadata.summary || '',
+    pubDate: new Date(paper.metadata.publishedAt).toUTCString(),
+    type: 'paper'
+  }))
+
+  const allItems = [...blogItems, ...paperItems].sort((a, b) => {
+    if (new Date(a.pubDate) > new Date(b.pubDate)) {
+      return -1
+    }
+    return 1
+  })
+
+  const itemsXml = allItems
     .map(
-      (post) =>
+      (item) =>
         `<item>
-          <title>${post.metadata.title}</title>
-          <link>${baseUrl}/blog/${post.slug}</link>
-          <description>${post.metadata.summary || ''}</description>
-          <pubDate>${new Date(
-            post.metadata.publishedAt
-          ).toUTCString()}</pubDate>
+          <title>${item.title}${item.type === 'paper' ? ' (Paper)' : ''}</title>
+          <link>${item.link}</link>
+          <description>${item.description}</description>
+          <pubDate>${item.pubDate}</pubDate>
         </item>`
     )
     .join('\n')
@@ -29,7 +47,7 @@ export async function GET() {
     <channel>
         <title>My Portfolio</title>
         <link>${baseUrl}</link>
-        <description>This is my portfolio RSS feed</description>
+        <description>This is my portfolio RSS feed with blog posts and papers</description>
         ${itemsXml}
     </channel>
   </rss>`

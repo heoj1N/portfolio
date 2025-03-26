@@ -46,10 +46,11 @@ Create an interactive brain map showing your different skills
 Different regions light up based on the currently viewed project
 Add subtle neural activity animations
 
-10 Research Paper Integration
+10 Research Paper Integration (DONE)
 Add a dynamic citation graph for your research interests
 Interactive visualization of paper relationships
 Animated abstracts with key highlights
+Added paper chat feature that allows visitors to ask questions about paper content
 
 11 Laboratory/Workspace Theme
 Add subtle microscope/lab equipment animations in the background

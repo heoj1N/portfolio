@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './ReinforcementLearningDemo.module.css';
+import AgentPerformanceTracker from '../utils/AgentPerformanceTracker';
+import AgentPerformanceChart from './AgentPerformanceChart';
 
 interface Position {
   x: number;
@@ -21,6 +23,16 @@ interface State {
   isLearning: boolean;
   learningRate: number;
   discountFactor: number;
+  showPerformanceMetrics: boolean;
+}
+
+interface PerformanceData {
+  performanceOverTime: any[];
+  summaryStats: {
+    totalEpisodes: number;
+    successRate: number;
+    avgMoves: number;
+  };
 }
 
 export default function ReinforcementLearningDemo() {
@@ -37,11 +49,23 @@ export default function ReinforcementLearningDemo() {
     isLearning: false,
     learningRate: 0.1,
     discountFactor: 0.95,
+    showPerformanceMetrics: false,
+  });
+
+  const [performanceData, setPerformanceData] = useState<PerformanceData>({
+    performanceOverTime: [],
+    summaryStats: {
+      totalEpisodes: 0,
+      successRate: 0,
+      avgMoves: 0
+    }
   });
 
   const qTableRef = useRef<QTable>({});
   const animationFrameRef = useRef<number>();
   const isLearningRef = useRef(false);
+  const performanceTrackerRef = useRef(new AgentPerformanceTracker());
+  const stepsPerEpisodeRef = useRef<number>(0);
 
   // Initialize Q-table
   useEffect(() => {
@@ -51,6 +75,9 @@ export default function ReinforcementLearningDemo() {
         qTableRef.current[`${x},${y}`] = actions.map(() => 0);
       }
     }
+
+    // Set optimal solution (in this grid, the optimal path is 8 moves)
+    performanceTrackerRef.current.setOptimalSolution('default', 8);
   }, []);
 
   // Q-learning algorithm
@@ -110,6 +137,15 @@ export default function ReinforcementLearningDemo() {
     return -1;
   };
 
+  // Update performance metrics
+  const updatePerformanceMetrics = () => {
+    const metrics = {
+      performanceOverTime: performanceTrackerRef.current.getPerformanceOverTime(),
+      summaryStats: performanceTrackerRef.current.getSummaryStats()
+    };
+    setPerformanceData(metrics);
+  };
+
   // Learning loop
   const learn = () => {
     if (!isLearningRef.current) {
@@ -125,9 +161,23 @@ export default function ReinforcementLearningDemo() {
       const reward = calculateReward(newPos, prevState.target);
 
       updateQValue(currentState, action, reward, nextState);
+      stepsPerEpisodeRef.current += 1;
 
       // Check if agent reached the target
       if (newPos.x === prevState.target.x && newPos.y === prevState.target.y) {
+        // Record completed episode in performance tracker
+        performanceTrackerRef.current.recordEpisode(
+          'default', 
+          stepsPerEpisodeRef.current, 
+          true
+        );
+        
+        // Update performance metrics
+        updatePerformanceMetrics();
+        
+        // Reset steps counter for next episode
+        stepsPerEpisodeRef.current = 0;
+        
         return {
           ...prevState,
           agent: { x: 0, y: 0 }, // Reset agent position
@@ -171,6 +221,12 @@ export default function ReinforcementLearningDemo() {
       cancelAnimationFrame(animationFrameRef.current);
     }
     
+    // Reset performance tracker
+    performanceTrackerRef.current = new AgentPerformanceTracker();
+    performanceTrackerRef.current.setOptimalSolution('default', 8);
+    stepsPerEpisodeRef.current = 0;
+    updatePerformanceMetrics();
+    
     setState({
       agent: { x: 0, y: 0 },
       target: { x: 4, y: 4 },
@@ -184,6 +240,7 @@ export default function ReinforcementLearningDemo() {
       isLearning: false,
       learningRate: state.learningRate,
       discountFactor: state.discountFactor,
+      showPerformanceMetrics: state.showPerformanceMetrics,
     });
     
     // Reset Q-table
@@ -193,6 +250,14 @@ export default function ReinforcementLearningDemo() {
         qTableRef.current[`${x},${y}`] = actions.map(() => 0);
       }
     }
+  };
+
+  // Toggle showing performance metrics
+  const togglePerformanceMetrics = () => {
+    setState(prev => ({
+      ...prev,
+      showPerformanceMetrics: !prev.showPerformanceMetrics
+    }));
   };
 
   // Cleanup
@@ -238,18 +303,26 @@ export default function ReinforcementLearningDemo() {
         )}
       </div>
       <div className={styles.controls}>
-        <button
-          onClick={toggleLearning}
-          className={styles.button}
-        >
-          {state.isLearning ? 'Stop Learning' : 'Start Learning'}
-        </button>
-        <button
-          onClick={resetEnvironment}
-          className={styles.button}
-        >
-          Reset
-        </button>
+        <div className={styles.buttons}>
+          <button
+            onClick={toggleLearning}
+            className={styles.button}
+          >
+            {state.isLearning ? 'Stop Learning' : 'Start Learning'}
+          </button>
+          <button
+            onClick={resetEnvironment}
+            className={styles.button}
+          >
+            Reset
+          </button>
+          <button
+            onClick={togglePerformanceMetrics}
+            className={styles.button}
+          >
+            {state.showPerformanceMetrics ? 'Hide Metrics' : 'Show Metrics'}
+          </button>
+        </div>
         <div className={styles.stats}>
           <p>Episode: {state.episode}</p>
           <p>Steps: {state.steps}</p>
@@ -286,6 +359,12 @@ export default function ReinforcementLearningDemo() {
             {state.discountFactor.toFixed(2)}
           </label>
         </div>
+        
+        {state.showPerformanceMetrics && (
+          <div className={styles.performanceSection}>
+            <AgentPerformanceChart performanceData={performanceData} />
+          </div>
+        )}
       </div>
     </div>
   );

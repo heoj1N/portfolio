@@ -22,6 +22,7 @@ export default function RoboticCursor() {
   const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
   const [trail, setTrail] = useState<Point[]>([]);
   const [gridCells, setGridCells] = useState<GridCell[]>([]);
+  const [isHoveringLink, setIsHoveringLink] = useState(false);
   const CELL_SIZE = 50; // Match the CSS grid size
   const HIGHLIGHT_RADIUS = 100; // Radius for grid cell highlighting
 
@@ -29,6 +30,30 @@ export default function RoboticCursor() {
     // Add cursor hiding class to body
     document.body.classList.add(styles.cursorHidden);
     return () => document.body.classList.remove(styles.cursorHidden);
+  }, []);
+
+  useEffect(() => {
+    // Track whether we're hovering over a link
+    const handleMouseOver = (e: MouseEvent) => {
+      // Check if the target or any of its parents is a link
+      let element = e.target as HTMLElement;
+      let isLink = false;
+      
+      while (element && !isLink) {
+        if (element.tagName === 'A' || element.tagName === 'BUTTON' || 
+            element.getAttribute('role') === 'button') {
+          isLink = true;
+        }
+        element = element.parentElement as HTMLElement;
+      }
+      
+      setIsHoveringLink(isLink);
+    };
+
+    document.addEventListener('mouseover', handleMouseOver);
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver);
+    };
   }, []);
 
   useEffect(() => {
@@ -105,12 +130,15 @@ export default function RoboticCursor() {
 
   return (
     <>
-      <div className={styles.cursor} style={{ left: mousePosition.x, top: mousePosition.y }} />
+      <div 
+        className={`${styles.cursor} ${isHoveringLink ? styles.link : ''}`} 
+        style={{ left: mousePosition.x, top: mousePosition.y }} 
+      />
       <div className={styles.trail}>
         {trail.map((point, index) => (
           <div
             key={index}
-            className={styles.trailDot}
+            className={`${styles.trailDot} ${isHoveringLink ? styles.link : ''}`}
             style={{
               left: point.x,
               top: point.y,
@@ -123,7 +151,7 @@ export default function RoboticCursor() {
       {gridCells.map((cell, index) => (
         <div
           key={index}
-          className={`${styles.gridCell} ${styles.highlight}`}
+          className={`${styles.gridCell} ${styles.highlight} ${isHoveringLink ? styles.link : ''}`}
           style={{
             left: cell.x,
             top: cell.y,
